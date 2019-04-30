@@ -1,0 +1,6 @@
+# Residual Files
+.ipynb_checkpoints
+.pyc
+
+# Dataset
+data/
