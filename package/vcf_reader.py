@@ -32,7 +32,7 @@ def chunk_transformer(filename, size=25000):
 
     writer = None
     chromosome = filename.split('/')[-1].split('.')[0]
-    output = '/'.join(['data', chromosome, '.pq'])
+    output = '/'.join(['data', chromosome + '.pq'])
 
     with open(filename, 'r') as fle:
 
