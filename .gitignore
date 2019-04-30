@@ -3,4 +3,4 @@
 .pyc
 
 # Dataset
-data/
+data/*.vcf
