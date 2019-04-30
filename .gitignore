@@ -4,3 +4,7 @@
 
 # Dataset
 data/*.vcf
+data/*.gz
+data/*.ped
+data/source.txt
+
