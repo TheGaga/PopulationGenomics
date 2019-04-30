@@ -2,6 +2,10 @@
 # Date:    30 April 2019
 # Project: Population Genomics
 
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+
 from io import StringIO
 from itertools import islice
 
