@@ -18,7 +18,8 @@ def vcf_to_pandas(lines):
         data: pd.DataFrame
     """
     # Dictionnary to map values to integers
-    mapper = {'0|0': 0, '0|1': 1, '0|2': 2, '1|0': 3, '1|1': 4, '1|2': 5, '2|0': 6, '2|1': 7, '2|2': 8}
+    mapper = {'0|0': 0, '0|1': 1, '0|2': 2, '1|0': 3, '1|1': 4, '1|2': 5, '2|0': 6, '2|1': 7, '2|2': 8,
+              '0|3': 9, '1|3': 10, '2|3': 11, '3|0': 12, '3|1': 13, '3|2': 14, '3|3': 15}
     # Filter lines
     lines = [l for l in lines if not l.startswith('##')]
     # Transform into dataframe
