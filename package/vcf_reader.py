@@ -17,20 +17,16 @@ def vcf_to_pandas(lines):
     Returns:
         data: pd.DataFrame
     """
-    # Dictionnary to map values to integers
-    mapper = {'0|0': 0, '0|1': 1, '0|2': 2, '1|0': 3, '1|1': 4, '1|2': 5, '2|0': 6, '2|1': 7, '2|2': 8,
-              '0|3': 9, '1|3': 10, '2|3': 11, '3|0': 12, '3|1': 13, '3|2': 14, '3|3': 15}
     # Filter lines
     lines = [l for l in lines if not l.startswith('##')]
     # Transform into dataframe
     frame = pd.read_csv(StringIO(''.join(lines)), dtype={'POS': int}, sep='\t')
     frame.set_index('POS', inplace=True)
     frame.drop(columns=['#CHROM', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'], inplace=True)
-    frame.replace(to_replace=mapper, inplace=True)
     # Memory efficiency
     del lines
 
-    return frame.astype('int8')
+    return frame
 
 def chunk_transformer(filename, size=25000):
 
