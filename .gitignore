@@ -13,3 +13,4 @@ data/*.pq
 data/*.vcf
 data/*.gz
 data/source.txt
+embedding/*.jb
