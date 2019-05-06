@@ -2,6 +2,9 @@
 # Date:    30 April 2019
 # Project: Population Genomics
 
+import os
+import tqdm
+import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -9,43 +12,46 @@ import pyarrow.parquet as pq
 from io import StringIO
 from itertools import islice
 
-def vcf_to_pandas(lines):
-    """
-    Read a .vcf file as pandas DataFrame
-    Input:
-        lines: list of strings
-    Returns:
-        data: pd.DataFrame
-    """
-    # Filter lines
-    lines = [l for l in lines if not l.startswith('##')]
-    # Transform into dataframe
-    frame = pd.read_csv(StringIO(''.join(lines)), dtype={'POS': int}, sep='\t')
-    frame.set_index('POS', inplace=True)
-    frame.drop(columns=['#CHROM', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'], inplace=True)
-    # Memory efficiency
-    del lines
+def count_lines(filename):
 
-    return frame
+    return int(os.popen('wc -l {}'.format(filename)).read().split()[0])
 
-def chunk_transformer(filename, size=25000):
+def collect_columns(filename):
 
-    writer = None
+    with open(filename, 'r') as fle: lines = list(islice(fle, 500))
+    lines = np.asarray([l[:-1].split('\t') for l in lines if not l.startswith('##')])
+
+    return lines[0]
+
+def chunk_transformer(filename, chunk=1000):
+
+    writer, ind, size = None, 0, count_lines(filename)
+    columns = collect_columns(filename)
     chromosome = filename.split('/')[-1].split('.')[0]
     output = '/'.join(['data', chromosome + '.pq'])
 
+    print('Columns to be extracted: {}'.format(len(columns)))
+    print('Number of lines to be read: {}'.format(size))
+
     with open(filename, 'r') as fle:
 
-        while True:
+        for _ in tqdm.tqdm(np.arange((size // chunk)+1)):
 
-            lines = list(islice(fle, size))
-            if not lines: break
-
-            lines = pa.Table.from_pandas(vcf_to_pandas(lines), preserve_index=True)
+            lines = np.asarray([l[:-1].split('\t') for l in islice(fle, chunk) if not l.startswith('##')])
+            if (ind == 0): lines = lines[1:]
+            lines = pd.DataFrame(lines, columns=columns)  
+            lines.set_index('POS', inplace=True)
+            lines.drop(columns=['#CHROM', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'], inplace=True)
+            lines = pa.Table.from_pandas(lines, preserve_index=True)
             if writer is None: writer = pq.ParquetWriter(output, lines.schema)
             writer.write_table(lines)
+            # Increase the counters
+            ind += 1
+            # Memory efficiency
+            del lines
 
-        writer.close()   
+            writer.close()
+            break
 
 if __name__ == '__main__':
 
