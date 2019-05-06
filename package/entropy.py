@@ -37,7 +37,6 @@ def chunk_entropy(filename, chunk=1000):
             ind += 1
             # Memory efficiency
             del lines
-            time.sleep(1)
 
         data.to_csv(output)
         
