@@ -33,12 +33,13 @@ def embed_chromosome(filename, n_components=3, chunk=50):
 
     for index in tqdm.tqdm(range(len(lst)//chunk + 1)):
 
-        vec = pd.read_parquet(filename, columns=lst[chunk*index:chunk*(index+1)]).values
+        beg, end = max(0, chunk*index), min(len(lst), chunk*(index+1))
+        vec = pd.read_parquet(filename, columns=lst[beg:end]).values
         # Temporary file modification
         vec[vec == '0|0'] = 0
         vec[vec != 0] = 1
         vec = vec.astype('int8').transpose()
-        # Run partial fit with approximated components
+        # Transform the data based on approximated components
         res.append(pca.transform(vec))
         # Memory efficiency
         del vec
