@@ -56,7 +56,9 @@ if __name__ == '__main__':
     prs = prs.parse_args()
 
     # Build the PCA estimator
-    # build_estimator(prs.file, n_components=prs.npca, chunk=prs.size)
+    print('> Building the PCA estimator (n_components {}) for {} ...'.format(prs.npca, prs.file))
+    build_estimator(prs.file, n_components=prs.npca, chunk=prs.size)
 
     # Build the pyarrow structure
+    print('> Embed {} to {} ...'.format(prs.file, prs.npca))
     embed_chromosome(prs.file, n_components=prs.npca, chunk=prs.size)
