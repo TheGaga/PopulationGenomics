@@ -12,8 +12,8 @@ from sklearn.decomposition import IncrementalPCA
 individuals = joblib.load('data/chr21_patients.jb')
 incremental = IncrementalPCA(n_components=3, copy=False)
 
-for index in tqdm.tqdm(range(len(individuals)//8)):
-    chr21 = pd.read_parquet('data/chr21.pq', columns=individuals[8*index:8*(index+1)]).values
+for index in tqdm.tqdm(range(len(individuals)//25 + 1)):
+    chr21 = pd.read_parquet('data/chr21.pq', columns=individuals[25*index:25*(index+1)]).values
     chr21[chr21 == '0|0'] = 0
     chr21[chr21 != 0] = 1
     chr21 = chr21.astype('int8').transpose()
