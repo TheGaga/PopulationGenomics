@@ -1,9 +1,14 @@
+# Compiled files
+
+package/__pycache__/
+
 # Residual Files
+
 .ipynb_checkpoints
 .pyc
 
 # Dataset
+
 data/*.vcf
 data/*.gz
 data/source.txt
-
