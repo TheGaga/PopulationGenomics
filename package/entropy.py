@@ -1,24 +1,17 @@
-try: from package.imports import *
-except: from imports import *
+# Author:  GALEON Thomas
+# Date:    06 May 2019
+# Project: Population Genomics
 
-def count_lines(filename):
-
-    return int(os.popen('wc -l {}'.format(filename)).read().split()[0])
-
-def collect_columns(filename):
-
-    with open(filename, 'r') as fle: lines = list(islice(fle, 500))
-    lines = np.asarray([l[:-1].split('\t') for l in lines if not l.startswith('##')])
-
-    return lines[0]
+try: from package.vcf_reader import *
+except: from vcf_reader import *
 
 def entropy_line(array):
 
     uni, cnt = np.unique(array, return_counts=True)
+
     return entropy(cnt/sum(cnt))
 
-
-def chunk_transformer(filename, chunk=1000):
+def chunk_entropy(filename, chunk=1000):
 
     data, ind, size = None, 0, count_lines(filename)
     columns = collect_columns(filename)
@@ -48,7 +41,6 @@ def chunk_transformer(filename, chunk=1000):
 
         data.to_csv(output)
         
-
 if __name__ == '__main__':
 
     # Initialize the arguments
@@ -58,4 +50,4 @@ if __name__ == '__main__':
     prs = prs.parse_args()
 
     # Build the dataframe
-    chunk_transformer(prs.file, prs.size)
+    chunk_entropy(prs.file, chunk=prs.size)
