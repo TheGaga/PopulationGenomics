@@ -12,7 +12,9 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from math import ceil
 from io import StringIO
 from itertools import islice
+from scipy.stats import entropy
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import IncrementalPCA
