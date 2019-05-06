@@ -2,15 +2,8 @@
 # Date:    30 April 2019
 # Project: Population Genomics
 
-import os
-import tqdm
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
-
-from io import StringIO
-from itertools import islice
+try: from package.imports import *
+except: from imports import *
 
 def count_lines(filename):
 
@@ -50,9 +43,19 @@ def chunk_transformer(filename, chunk=1000):
             # Memory efficiency
             del lines
 
-            writer.close()
-            break
+        writer.close()
 
 if __name__ == '__main__':
 
-    chunk_transformer('data/chr20.vcf')
+    # Initialize the arguments
+    prs = argparse.ArgumentParser()
+    prs.add_argument('-f', '--file', help='Filename', type=str)
+    prs.add_argument('-s', '--size', help='Chunk Size', type=int, default=1000)
+    prs = prs.parse_args()
+
+    # Serialize the list of individuals
+    out = '.'.join(prs.file.split('.')[:-1]) + '.jb'
+    joblib.dump(collect_columns(prs.file), out)
+
+    # Build the pyarrow structure
+    chunk_transformer(prs.file, prs.size)
