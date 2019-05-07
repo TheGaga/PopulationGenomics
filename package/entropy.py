@@ -13,10 +13,10 @@ def entropy_line(array):
 
 def chunk_entropy(filename, chunk=1000):
 
-    data, ind, size = None, 0, count_lines(filename)
+    writer, ind, size = None, 0, count_lines(filename)
     columns = collect_columns(filename)
     chromosome = filename.split('/')[-1].split('.')[0]
-    output = '/'.join(['data', chromosome + '_entropy.csv'])
+    output = '/'.join(['data', chromosome + '_entropy.pq'])
 
     print('Columns to be extracted: {}'.format(len(columns)))
     print('Number of lines to be read: {}'.format(size))
@@ -30,15 +30,16 @@ def chunk_entropy(filename, chunk=1000):
             lines = pd.DataFrame(lines, columns=columns)  
             lines.set_index('POS', inplace=True)
             lines.drop(columns=['#CHROM', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT'], inplace=True)
-            lines = lines.apply(entropy_line, axis=1)
-            if data is None: data = lines
-            else: data = pd.concat([data, lines])
+            lines = pd.DataFrame(lines.apply(entropy_line, axis=1))
+            lines = pa.Table.from_pandas(lines, preserve_index=True)
+            if writer is None: writer = pq.ParquetWriter(output, lines.schema)
+            writer.write_table(lines)
             # Increase the counters
             ind += 1
             # Memory efficiency
             del lines
 
-        data.to_csv(output)
+        writer.close()
         
 if __name__ == '__main__':
 
