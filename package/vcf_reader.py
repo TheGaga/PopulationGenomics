@@ -54,8 +54,10 @@ if __name__ == '__main__':
     prs = prs.parse_args()
 
     # Serialize the list of individuals
-    out = '.'.join(prs.file.split('.')[:-1]) + '.jb'
+    print('> Build the list of individuals ...')
+    out = '.'.join(prs.file.split('.')[:-1]) + '_patients.jb'
     joblib.dump(collect_columns(prs.file), out)
 
     # Build the pyarrow structure
+    print('> Transform {} to a pyarrow structure ...'.format(prs.file))
     chunk_transformer(prs.file, prs.size)
