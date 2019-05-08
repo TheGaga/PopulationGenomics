@@ -31,13 +31,14 @@ def embed_chromosome(filename, n_components=3, chunk=50):
 
     col, res, nme = [], [], filename.split('/')[-1].split('.')[0]
     lst = joblib.load('data/{}_patients.jb'.format(nme))
+    msk = ['#CHROM', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
+    lst = [l for l in lst if l not in msk]
     pca = joblib.load('embedding/{}_pca_{}.jb'.format(nme, n_components))
 
     for index in tqdm.tqdm(range(len(lst)//chunk + 1)):
 
         beg, end = max(0, chunk*index), min(len(lst), chunk*(index+1))
         vec = pd.read_parquet(filename, columns=lst[beg:end]).values
-        col += list(lst[beg:end].astype(str))
         # Temporary file modification
         vec[vec == '0|0'] = 0
         vec[vec != 0] = 1
