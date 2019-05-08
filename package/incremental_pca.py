@@ -27,7 +27,7 @@ def build_estimator(filename, n_components=3, chunk=50):
 
 def embed_chromosome(filename, n_components=3, chunk=50):
 
-    res, nme = [], filename.split('/')[-1].split('.')[0]
+    col, res, nme = [], [], filename.split('/')[-1].split('.')[0]
     lst = joblib.load('data/{}_patients.jb'.format(nme))
     pca = joblib.load('embedding/{}_pca_{}.jb'.format(nme, n_components))
 
@@ -35,6 +35,7 @@ def embed_chromosome(filename, n_components=3, chunk=50):
 
         beg, end = max(0, chunk*index), min(len(lst), chunk*(index+1))
         vec = pd.read_parquet(filename, columns=lst[beg:end]).values
+        col += lst[beg:end]
         # Temporary file modification
         vec[vec == '0|0'] = 0
         vec[vec != 0] = 1
@@ -44,7 +45,7 @@ def embed_chromosome(filename, n_components=3, chunk=50):
         # Memory efficiency
         del vec
 
-    res = pd.DataFrame(np.vstack(tuple(res)), index=lst)
+    res = pd.DataFrame(np.vstack(tuple(res)), index=col)
     res.to_pickle('embedding/{}_dimension_{}.df'.format(nme, n_components))
 
 if __name__ == '__main__':

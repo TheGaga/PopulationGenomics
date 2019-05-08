@@ -9,6 +9,7 @@ package/__pycache__/
 
 # Dataset
 
+data/*.jb
 data/*.pq
 data/*.vcf
 data/*.gz
