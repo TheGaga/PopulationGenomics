@@ -7,6 +7,8 @@ except: from imports import *
 
 def build_estimator(filename, n_components=3, chunk=50):
 
+    warnings.simplefilter('ignore')
+
     nme = filename.split('/')[-1].split('.')[0]
     lst = joblib.load('data/{}_patients.jb'.format(nme))
     pca = IncrementalPCA(n_components=n_components, copy=False)
@@ -40,6 +42,7 @@ def embed_chromosome(filename, n_components=3, chunk=50):
         vec[vec == '0|0'] = 0
         vec[vec != 0] = 1
         vec = vec.astype('int8').transpose()
+        print(len(lst[beg:end]), len(vec))
         # Transform the data based on approximated components
         res.append(pca.transform(vec))
         # Memory efficiency
