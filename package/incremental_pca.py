@@ -11,6 +11,8 @@ def build_estimator(filename, n_components=3, chunk=50):
 
     nme = filename.split('/')[-1].split('.')[0]
     lst = joblib.load('data/{}_patients.jb'.format(nme))
+    msk = ['#CHROM', 'ID', 'POS', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
+    lst = [l for l in lst if l not in msk]
     pca = IncrementalPCA(n_components=n_components, copy=False)
 
     for index in tqdm.tqdm(range(len(lst)//chunk + 1)):
@@ -29,9 +31,9 @@ def build_estimator(filename, n_components=3, chunk=50):
 
 def embed_chromosome(filename, n_components=3, chunk=50):
 
-    col, res, nme = [], [], filename.split('/')[-1].split('.')[0]
+    res, nme = [], filename.split('/')[-1].split('.')[0]
     lst = joblib.load('data/{}_patients.jb'.format(nme))
-    msk = ['#CHROM', 'ID', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
+    msk = ['#CHROM', 'ID', 'POS', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
     lst = [l for l in lst if l not in msk]
     pca = joblib.load('embedding/{}_pca_{}.jb'.format(nme, n_components))
 
@@ -43,13 +45,12 @@ def embed_chromosome(filename, n_components=3, chunk=50):
         vec[vec == '0|0'] = 0
         vec[vec != 0] = 1
         vec = vec.astype('int8').transpose()
-        print(len(lst[beg:end]), len(vec))
         # Transform the data based on approximated components
         res.append(pca.transform(vec))
         # Memory efficiency
         del vec
 
-    res = pd.DataFrame(np.vstack(tuple(res)), index=col)
+    res = pd.DataFrame(np.vstack(tuple(res)), index=lst)
     res.to_pickle('embedding/{}_dimension_{}.df'.format(nme, n_components))
 
 if __name__ == '__main__':
