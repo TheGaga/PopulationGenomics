@@ -5,6 +5,16 @@
 try: from package.imports import *
 except: from imports import *
 
+def list_patients()
+
+    phe = pd.read_csv('data/phenotypes.ped', sep='\t')[['Individual ID', 'Population']]
+    pop = pd.read_csv('data/populations.tsv', sep='\t')[['Population Code', 'Super Population']]
+    out = phe.merge(pop, how='left', left_on='Population', right_on='Population Code')
+    out.set_index('Individual ID', inplace=True)
+    out = dtf.merge(out, how='left', left_index=True, right_index=True)
+
+    return out
+
 def count_lines(filename):
 
     return int(os.popen('wc -l {}'.format(filename)).read().split()[0])

@@ -2,22 +2,22 @@
 # Date:    05 May 2019
 # Project: PopulationGenomics
 
-try: from package.imports import *
-except: from imports import *
+try: from package.vcf_reader import *
+except: from vcf_reader import *
 
 def build_estimator(filename, n_components=3, chunk=50):
 
     warnings.simplefilter('ignore')
 
     nme = filename.split('/')[-1].split('.')[0]
-    lst = joblib.load('data/{}_patients.jb'.format(nme))
-    msk = ['#CHROM', 'ID', 'POS', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
-    lst = [l for l in lst if l not in msk]
     pca = IncrementalPCA(n_components=n_components, copy=False)
 
-    for index in tqdm.tqdm(range(len(lst)//chunk + 1)):
+    out = list_patients()
+    n,l = out.index.values.ravel(), out.Population.values.ravel()
+    skf = StratifiedKFold(n_splits=len(n)//chunk, shuffle=True, random_state=42)
+    for _, lst in tqdm.tqdm(skf.split(n, l)):
 
-        vec = pd.read_parquet(filename, columns=lst[chunk*index:chunk*(index+1)]).values
+        vec = pd.read_parquet(filename, columns=n[lst]).values
         # Temporary file modification
         vec[vec == '0|0'] = 0
         vec[vec != 0] = 1
