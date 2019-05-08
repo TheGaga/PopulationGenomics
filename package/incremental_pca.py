@@ -35,7 +35,7 @@ def embed_chromosome(filename, n_components=3, chunk=50):
 
         beg, end = max(0, chunk*index), min(len(lst), chunk*(index+1))
         vec = pd.read_parquet(filename, columns=lst[beg:end]).values
-        col += lst[beg:end]
+        col += list(lst[beg:end].astype(str))
         # Temporary file modification
         vec[vec == '0|0'] = 0
         vec[vec != 0] = 1
