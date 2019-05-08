@@ -5,7 +5,7 @@
 try: from package.imports import *
 except: from imports import *
 
-def list_patients()
+def list_patients():
 
     phe = pd.read_csv('data/phenotypes.ped', sep='\t')[['Individual ID', 'Population']]
     pop = pd.read_csv('data/populations.tsv', sep='\t')[['Population Code', 'Super Population']]
