@@ -27,14 +27,14 @@ def build_estimator(filename, n_components=3, chunk=50, trim=None):
         out = out.index.values.ravel()
         ser = 'embedding/{}_pca_{}.jb'.format(nme, n_components)
     else: 
-        out = continent_individuals(trim)
+        out = np.asarray(continent_individuals(trim))
         pop = [trim for _ in range(len(out))]
         ser = 'embedding/{}_{}_pca_{}.jb'.format(nme, trim, n_components)
 
     skf = StratifiedKFold(n_splits=len(out)//chunk, shuffle=True, random_state=42)
     for _, lst in tqdm.tqdm(skf.split(out, pop)):
 
-        vec = pd.read_parquet(filename, columns=n[lst]).values
+        vec = pd.read_parquet(filename, columns=out[lst]).values
         # Temporary file modification
         vec[vec == '0|0'] = 0
         vec[vec != 0] = 1
