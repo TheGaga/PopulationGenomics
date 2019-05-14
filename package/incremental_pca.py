@@ -5,17 +5,34 @@
 try: from package.vcf_reader import *
 except: from vcf_reader import *
 
-def build_estimator(filename, n_components=3, chunk=50):
+def continent_individuals(continent):
+
+    phe = pd.read_csv('data/phenotypes.ped', sep='\t')[['Individual ID', 'Population']]
+    pop = pd.read_csv('data/populations.tsv', sep='\t')[['Population Code', 'Super Population']]
+    pop = phe.merge(pop, how='left', left_on='Population', right_on='Population Code')
+    pop.drop(['Population', 'Population Code'], axis=1, inplace=True)
+    
+    return list(pop[pop['Super Population'] == continent]['Individual ID'].values.ravel())
+
+def build_estimator(filename, n_components=3, chunk=50, trim=None):
 
     warnings.simplefilter('ignore')
 
     nme = filename.split('/')[-1].split('.')[0]
     pca = IncrementalPCA(n_components=n_components, copy=False)
 
-    out = list_patients()
-    n,l = out.index.values.ravel(), out.Population.values.ravel()
-    skf = StratifiedKFold(n_splits=len(n)//chunk, shuffle=True, random_state=42)
-    for _, lst in tqdm.tqdm(skf.split(n, l)):
+    if trim is None: 
+        out = list_patients()
+        pop = out.Population.values.ravel()
+        out = out.index.values.ravel()
+        ser = 'embedding/{}_pca_{}.jb'.format(nme, n_components)
+    else: 
+        out = continent_individuals(trim)
+        pop = [trim for _ in range(len(out))]
+        ser = 'embedding/{}_{}_pca_{}.jb'.format(nme, trim, n_components)
+
+    skf = StratifiedKFold(n_splits=len(out)//chunk, shuffle=True, random_state=42)
+    for _, lst in tqdm.tqdm(skf.split(out, pop)):
 
         vec = pd.read_parquet(filename, columns=n[lst]).values
         # Temporary file modification
@@ -27,15 +44,25 @@ def build_estimator(filename, n_components=3, chunk=50):
         # Memory efficiency
         del vec
 
-    joblib.dump(pca, 'embedding/{}_pca_{}.jb'.format(nme, n_components))
+    joblib.dump(pca, ser)
 
-def embed_chromosome(filename, n_components=3, chunk=50):
+def embed_chromosome(filename, n_components=3, chunk=50, trim=None):
 
     res, nme = [], filename.split('/')[-1].split('.')[0]
-    lst = joblib.load('data/{}_patients.jb'.format(nme))
+
+    # Select the right patients
+    if trim is None: 
+        lst = joblib.load('data/{}_patients.jb'.format(nme))
+        pca = joblib.load('embedding/{}_pca_{}.jb'.format(nme, n_components))
+        out = 'embedding/{}_dimension_{}.df'.format(nme, n_components)
+    else: 
+        lst = continent_individuals(trim)
+        pca = joblib.load('embedding/{}_{}_pca_{}.jb'.format(nme, trim, n_components))
+        out = 'embedding/{}_{}_dimension_{}.df'.format(nme, trim, n_components)
+
+    # Apply column filtering
     msk = ['#CHROM', 'ID', 'POS', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
     lst = [l for l in lst if l not in msk]
-    pca = joblib.load('embedding/{}_pca_{}.jb'.format(nme, n_components))
 
     for index in tqdm.tqdm(range(len(lst)//chunk + 1)):
 
@@ -51,14 +78,15 @@ def embed_chromosome(filename, n_components=3, chunk=50):
         del vec
 
     res = pd.DataFrame(np.vstack(tuple(res)), index=lst)
-    res.to_pickle('embedding/{}_dimension_{}.df'.format(nme, n_components))
+    res.to_pickle(out)
 
 if __name__ == '__main__':
 
     # Initialize the arguments
     prs = argparse.ArgumentParser()
     prs.add_argument('-f', '--file', help='Filename', type=str)
-    prs.add_argument('-s', '--size', help='Chunk Size', type=int, default=50)
+    prs.add_argument('-s', '--size', help='Chunk size', type=int, default=50)
+    prs.add_argument('-t', '--trim', help='Continent specific', default=None)
     prs.add_argument('-c', '--npca', help='Number of components', type=int, default=3)
     prs = prs.parse_args()
 
@@ -68,4 +96,4 @@ if __name__ == '__main__':
 
     # Build the pyarrow structure
     print('> Embed {} to {} ...'.format(prs.file, prs.npca))
-    embed_chromosome(prs.file, n_components=prs.npca, chunk=prs.size)
+    embed_chromosome(prs.file, n_components=prs.npca, chunk=prs.size, trim=prs.trim)
