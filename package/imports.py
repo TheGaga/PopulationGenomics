@@ -19,4 +19,5 @@ from itertools import islice
 from scipy.stats import entropy
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import IncrementalPCA
+from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold

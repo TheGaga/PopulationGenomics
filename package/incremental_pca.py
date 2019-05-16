@@ -56,18 +56,20 @@ def embed_chromosome(filename, n_components=3, chunk=50, trim=None):
         pca = joblib.load('embedding/{}_pca_{}.jb'.format(nme, n_components))
         out = 'embedding/{}_dimension_{}.df'.format(nme, n_components)
     else: 
-        lst = continent_individuals(trim)
+        lst = np.asarray(continent_individuals(trim))
         pca = joblib.load('embedding/{}_{}_pca_{}.jb'.format(nme, trim, n_components))
         out = 'embedding/{}_{}_dimension_{}.df'.format(nme, trim, n_components)
 
+    skf = KFold(n_splits=len(lst)//50, shuffle=False, random_state=42)
     # Apply column filtering
     msk = ['#CHROM', 'ID', 'POS', 'REF', 'ALT', 'QUAL', 'FILTER', 'INFO', 'FORMAT']
-    lst = [l for l in lst if l not in msk]
+    col, lst = [], np.asarray([l for l in lst if l not in msk])
 
-    for index in tqdm.tqdm(range(len(lst)//chunk + 1)):
+    for _, index in tqdm.tqdm(skf.split(lst)):
 
-        beg, end = max(0, chunk*index), min(len(lst), chunk*(index+1))
-        vec = pd.read_parquet(filename, columns=lst[beg:end]).values
+        vec = pd.read_parquet(filename, columns=lst[index])
+        col += list(vec.columns)
+        vec = vec.values
         # Temporary file modification
         vec[vec == '0|0'] = 0
         vec[vec != 0] = 1
@@ -77,7 +79,7 @@ def embed_chromosome(filename, n_components=3, chunk=50, trim=None):
         # Memory efficiency
         del vec
 
-    res = pd.DataFrame(np.vstack(tuple(res)), index=lst)
+    res = pd.DataFrame(np.vstack(tuple(res)), index=col)
     res.to_pickle(out)
 
 if __name__ == '__main__':
@@ -86,13 +88,15 @@ if __name__ == '__main__':
     prs = argparse.ArgumentParser()
     prs.add_argument('-f', '--file', help='Filename', type=str)
     prs.add_argument('-s', '--size', help='Chunk size', type=int, default=50)
-    prs.add_argument('-t', '--trim', help='Continent specific', default=None)
+    prs.add_argument('-t', '--trim', help='Continent specific', type=str, default='None')
     prs.add_argument('-c', '--npca', help='Number of components', type=int, default=3)
     prs = prs.parse_args()
+    # Cast argument
+    if prs.trim == 'None': prs.trim = None
 
     # Build the PCA estimator
     print('> Building the PCA estimator (n_components {}) for {} ...'.format(prs.npca, prs.file))
-    build_estimator(prs.file, n_components=prs.npca, chunk=prs.size)
+    build_estimator(prs.file, n_components=prs.npca, chunk=prs.size, trim=prs.trim)
 
     # Build the pyarrow structure
     print('> Embed {} to {} ...'.format(prs.file, prs.npca))
